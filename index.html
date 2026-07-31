@@ -50,7 +50,7 @@ tr:hover td{background:#f0f4ff}
 @media(max-width:768px){.app{padding:8px}.header h1{font-size:1.4rem}.tab{padding:8px 14px;font-size:.85rem}.form-row{flex-direction:column;align-items:stretch}.input-md,.input-lg,.input-date,.input-amount{width:100%}.card{padding:14px}.settle-row{flex-wrap:wrap}}
 @media(max-width:480px){.tabs{gap:0}.tab{padding:8px 10px;font-size:.8rem}}
 </style>
-<link rel="manifest" href="manifest.json">
+<link rel="manifest" href="/iou-slayer/manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="IOU Slayer">
@@ -254,7 +254,7 @@ function SetupTab(p){
 }
 
 ReactDOM.render(e(App),document.getElementById('root'));
-if('serviceWorker' in navigator){try{navigator.serviceWorker.register('sw.js').catch(function(){});}catch(x){}}
+if('serviceWorker' in navigator){try{navigator.serviceWorker.register('/iou-slayer/sw.js').catch(function(){});}catch(x){}}
 </script>
 </body>
 </html>

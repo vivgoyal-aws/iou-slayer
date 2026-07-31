@@ -1,5 +1,11 @@
-const CACHE_NAME = 'iou-slayer-v1';
-const ASSETS = ['./index.html', './manifest.json'];
+const CACHE_NAME = 'iou-slayer-v2';
+const BASE = '/iou-slayer/';
+const ASSETS = [
+  BASE + 'index.html',
+  BASE + 'manifest.json',
+  BASE + 'icon-192.png',
+  BASE + 'icon-512.png'
+];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS)));
@@ -15,6 +21,6 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   e.respondWith(
-    caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match(new URL('./index.html', self.location.href).href)))
+    caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match(BASE + 'index.html')))
   );
 });
