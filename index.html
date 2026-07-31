@@ -27,6 +27,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .input:focus{border-color:var(--primary)}
 .input-md{width:160px}.input-lg{flex:1;min-width:120px}.input-date{width:140px}.input-amount{width:100px;font-family:var(--mono);text-align:right}
 .btn{padding:8px 16px;border-radius:var(--r);border:none;cursor:pointer;font-size:.85rem;font-weight:500;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn-icon{padding:6px 10px;min-width:0;gap:0;font-size:1rem;background:var(--bg2);color:var(--fg);border:1px solid var(--border)}
 .btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:#3a62aa}
 .btn-danger{background:var(--err);color:#fff}.btn-danger:hover{background:#c82333}
 .btn-sm{padding:4px 10px;font-size:.8rem}
@@ -135,9 +136,9 @@ function App(){
     e('div',{className:'header'},e('h1',null,e('i',{className:'fa-solid fa-skull-crossbones',style:{marginRight:8}}),'IOU Slayer'),e('p',null,'Slay those IOUs among friends')),
     e('div',{className:'toolbar'},
       e('input',{className:'input input-lg',value:tripName,onChange:function(ev){setTripName(ev.target.value);},placeholder:'Quest name...',style:{fontWeight:500,maxWidth:250}}),
-      e('button',{className:'btn btn-primary',onClick:saveTrip},e('i',{className:'fa-solid fa-download'}),'Save'),
-      e('button',{className:'btn btn-outline',onClick:loadTrip},e('i',{className:'fa-solid fa-upload'}),'Load'),
-      confirmClear?e('span',{style:{display:'inline-flex',gap:4,alignItems:'center'}},e('span',{style:{fontSize:'.8rem',color:'var(--err)'}},'End quest?'),e('button',{className:'btn btn-sm btn-danger',onClick:clearTrip},'Yes'),e('button',{className:'btn btn-sm btn-outline',onClick:function(){setConfirmClear(false);}},'No')):e('button',{className:'btn btn-outline',onClick:clearTrip,style:{color:'var(--err)'}},e('i',{className:'fa-solid fa-trash'}),'Clear')
+      e('button',{className:'btn btn-icon',onClick:saveTrip,title:'Save Quest'},e('i',{className:'fa-solid fa-download'})),
+      e('button',{className:'btn btn-icon',onClick:loadTrip,title:'Load Quest'},e('i',{className:'fa-solid fa-upload'})),
+      confirmClear?e('span',{style:{display:'inline-flex',gap:4,alignItems:'center'}},e('button',{className:'btn btn-icon btn-danger',onClick:clearTrip,title:'Confirm clear'},e('i',{className:'fa-solid fa-check'})),e('button',{className:'btn btn-icon',onClick:function(){setConfirmClear(false);},title:'Cancel'},e('i',{className:'fa-solid fa-xmark'}))):e('button',{className:'btn btn-icon',onClick:clearTrip,title:'Clear Quest',style:{color:'var(--err)'}},e('i',{className:'fa-solid fa-trash'}))
     ),
     e('div',{className:'tabs'},tabs.map(function(t){return e('button',{key:t.id,className:'tab'+(tab===t.id?' active':''),onClick:function(){setTab(t.id);}},e('i',{className:'fa-solid '+t.icon,style:{marginRight:6}}),t.label);})),
     tab==='expenses'&&ExpensesTab({friends:friends,expenses:expenses,addExpense:addExpense,updateExpense:updateExpense,toggleSplit:toggleSplit,selectAllSplits:selectAllSplits,removeExpense:removeExpense,confirmDelExp:confirmDelExp,setConfirmDelExp:setConfirmDelExp}),
