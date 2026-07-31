@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IOU Slayer</title>
+<script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root{--bg:#f8f9fa;--surface:#fff;--primary:#4472C4;--primary-lt:#d6e4f0;--text:#1a1a2e;--text2:#555;--muted:#888;--border:#e0e0e0;--ok:#28a745;--ok-bg:#d4edda;--err:#dc3545;--err-bg:#f8d7da;--warn-bg:#fff3cd;--info-bg:#d6e4f0;--r:8px;--shadow:0 2px 8px rgba(0,0,0,.08);--font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;--mono:'SF Mono',Consolas,monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}
+.app{max-width:1200px;margin:0 auto;padding:16px}
+.header{text-align:center;padding:20px 0 12px}
+.header h1{font-size:1.8rem;color:var(--primary);font-weight:700}
+.header p{color:var(--muted);font-size:.9rem;margin-top:4px}
+.toolbar{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.tabs{display:flex;gap:4px;border-bottom:2px solid var(--border);margin-bottom:20px;overflow-x:auto}
+.tab{padding:10px 20px;cursor:pointer;border:none;background:none;font-size:.95rem;font-weight:500;color:var(--text2);border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap}
+.tab:hover{color:var(--primary);background:var(--primary-lt);border-radius:var(--r) var(--r) 0 0}
+.tab.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600}
+.card{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);padding:20px;margin-bottom:16px}
+.card h2{font-size:1.1rem;color:var(--primary);margin-bottom:12px}
+.form-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+.input{padding:8px 12px;border:1px solid var(--border);border-radius:var(--r);font-size:.9rem;font-family:var(--font);outline:none;transition:border-color .2s}
+.input:focus{border-color:var(--primary)}
+.input-md{width:160px}.input-lg{flex:1;min-width:120px}.input-date{width:140px}.input-amount{width:100px;font-family:var(--mono);text-align:right}
+.btn{padding:8px 16px;border-radius:var(--r);border:none;cursor:pointer;font-size:.85rem;font-weight:500;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:#3a62aa}
+.btn-danger{background:var(--err);color:#fff}.btn-danger:hover{background:#c82333}
+.btn-sm{padding:4px 10px;font-size:.8rem}
+.btn-outline{background:none;border:1px solid var(--border);color:var(--text2)}.btn-outline:hover{background:var(--bg)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{text-align:left;padding:8px 10px;background:var(--primary);color:#fff;font-weight:500;white-space:nowrap}
+td{padding:8px 10px;border-bottom:1px solid var(--border)}
+tr:hover td{background:#f0f4ff}
+.text-right{text-align:right}.mono{font-family:var(--mono)}
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:.75rem;font-weight:600}
+.badge-green{background:var(--ok-bg);color:var(--ok)}.badge-red{background:var(--err-bg);color:var(--err)}.badge-gray{background:#eee;color:#666}.badge-blue{background:var(--info-bg);color:var(--primary)}
+.check-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:4px}
+.check-item{display:flex;align-items:center;gap:4px;font-size:.8rem}
+.check-item input{width:16px;height:16px;accent-color:var(--primary)}
+.settle-row{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:var(--r);margin-bottom:4px;background:var(--warn-bg)}
+.settle-amount{font-family:var(--mono);font-weight:600;margin-left:auto}
+.collapsible{display:flex;align-items:center;gap:8px;cursor:pointer}
+.collapsible:hover{opacity:.8}
+@media(max-width:768px){.app{padding:8px}.header h1{font-size:1.4rem}.tab{padding:8px 14px;font-size:.85rem}.form-row{flex-direction:column;align-items:stretch}.input-md,.input-lg,.input-date,.input-amount{width:100%}.card{padding:14px}.settle-row{flex-wrap:wrap}}
+@media(max-width:480px){.tabs{gap:0}.tab{padding:8px 10px;font-size:.8rem}}
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="IOU Slayer">
+<meta name="theme-color" content="#4472C4">
+</head>
+<body>
+<div id="root"></div>
+<script>
+var e=React.createElement,useState=React.useState,useMemo=React.useMemo,useEffect=React.useEffect;
+
+// Safe localStorage wrapper (gracefully handles sandboxed iframes)
+var _store={ok:false};
+try{var _t='__t';localStorage.setItem(_t,'1');localStorage.removeItem(_t);_store.ok=true;}catch(x){}
+_store.get=function(){if(!_store.ok)return null;try{return JSON.parse(localStorage.getItem('iou_slayer_data'));}catch(x){return null;}};
+_store.set=function(d){if(!_store.ok)return;try{localStorage.setItem('iou_slayer_data',JSON.stringify(d));}catch(x){}};
+_store.clear=function(){if(!_store.ok)return;try{localStorage.removeItem('iou_slayer_data');}catch(x){}};
+var _savedData=_store.get()||{};
+
+function App(){
+  var _s=useState('expenses'),tab=_s[0],setTab=_s[1];
+  var _f=useState(_savedData.friends||['Alice','Bob','Charlie','David','Eve']),friends=_f[0],setFriends=_f[1];
+  var _defaultExp=[
+    {id:1,date:'2026-07-01',desc:'Dinner at restaurant',amount:120,paidBy:'Alice',splits:['Alice','Bob','Charlie','David','Eve']},
+    {id:2,date:'2026-07-01',desc:'Movie tickets',amount:75,paidBy:'Bob',splits:['Alice','Bob','Charlie']},
+    {id:3,date:'2026-07-02',desc:'Gas for road trip',amount:60,paidBy:'Charlie',splits:['Alice','Bob','Charlie','David','Eve']},
+    {id:4,date:'2026-07-02',desc:'Hotel room',amount:200,paidBy:'David',splits:['Bob','Charlie','David']},
+    {id:5,date:'2026-07-03',desc:'Groceries',amount:45,paidBy:'Alice',splits:['Alice','Bob','Eve']}
+  ];
+  var _e=useState(_savedData.expenses||_defaultExp),expenses=_e[0],setExpenses=_e[1];
+  var _n=useState(_savedData.nextId||6),nextId=_n[0],setNextId=_n[1];
+  var _mo=useState(false),matrixOpen=_mo[0],setMatrixOpen=_mo[1];
+  var _bo=useState(false),balancesOpen=_bo[0],setBalancesOpen=_bo[1];
+  var _tn=useState(_savedData.tripName||'My Quest'),tripName=_tn[0],setTripName=_tn[1];
+  var _nf=useState(''),newFriendName=_nf[0],setNewFriendName=_nf[1];
+  var _cc=useState(false),confirmClear=_cc[0],setConfirmClear=_cc[1];
+  var _cdf=useState(null),confirmDelFriend=_cdf[0],setConfirmDelFriend=_cdf[1];
+  var _cde=useState(null),confirmDelExp=_cde[0],setConfirmDelExp=_cde[1];
+
+  // Auto-save to localStorage when state changes (no-op in sandboxed iframes)
+  useEffect(function(){
+    _store.set({friends:friends,expenses:expenses,nextId:nextId,tripName:tripName});
+  },[friends,expenses,nextId,tripName]);
+
+  var calc=useMemo(function(){
+    var paid={},owed={};
+    friends.forEach(function(f){paid[f]=0;owed[f]=0;});
+    expenses.forEach(function(x){
+      if(x.paidBy&&paid[x.paidBy]!==undefined)paid[x.paidBy]+=x.amount;
+      var c=x.splits.length;
+      if(c>0)x.splits.forEach(function(f){if(owed[f]!==undefined)owed[f]+=x.amount/c;});
+    });
+    var balance={};
+    friends.forEach(function(f){balance[f]=(paid[f]||0)-(owed[f]||0);});
+    var totalPos=Object.values(balance).filter(function(b){return b>0;}).reduce(function(s,v){return s+v;},0);
+    var settlements=[];
+    friends.forEach(function(from){
+      friends.forEach(function(to){
+        if(from===to)return;
+        var amt=0;
+        if(balance[from]<0&&balance[to]>0&&totalPos>0)amt=Math.round(Math.abs(balance[from])*balance[to]/totalPos*100)/100;
+        else if(balance[from]>0&&balance[to]<0&&totalPos>0)amt=-Math.round(Math.abs(balance[to])*balance[from]/totalPos*100)/100;
+        settlements.push({from:from,to:to,amount:amt});
+      });
+    });
+    return{paid:paid,owed:owed,balance:balance,settlements:settlements,totalExpenses:expenses.reduce(function(s,x){return s+x.amount;},0)};
+  },[friends,expenses]);
+
+  function addFriend(){if(newFriendName.trim()&&friends.indexOf(newFriendName.trim())===-1){setFriends(friends.concat([newFriendName.trim()]));setNewFriendName('');}}
+  function removeFriend(f){if(confirmDelFriend!==f){setConfirmDelFriend(f);return;}setFriends(friends.filter(function(x){return x!==f;}));setExpenses(expenses.map(function(x){return{id:x.id,date:x.date,desc:x.desc,amount:x.amount,paidBy:x.paidBy===f?'':x.paidBy,splits:x.splits.filter(function(s){return s!==f;})};}));setConfirmDelFriend(null);}
+  function addExpense(){var today=new Date().toISOString().slice(0,10);setExpenses([{id:nextId,date:today,desc:'',amount:0,paidBy:'',splits:friends.slice()}].concat(expenses));setNextId(nextId+1);}
+  function updateExpense(id,field,val){setExpenses(expenses.map(function(x){if(x.id!==id)return x;var o={id:x.id,date:x.date,desc:x.desc,amount:x.amount,paidBy:x.paidBy,splits:x.splits};o[field]=val;return o;}));}
+  function toggleSplit(id,f){setExpenses(expenses.map(function(x){if(x.id!==id)return x;var sp=x.splits.indexOf(f)>-1?x.splits.filter(function(s){return s!==f;}):x.splits.concat([f]);return{id:x.id,date:x.date,desc:x.desc,amount:x.amount,paidBy:x.paidBy,splits:sp};}));}
+  function selectAllSplits(id){setExpenses(expenses.map(function(x){return x.id===id?{id:x.id,date:x.date,desc:x.desc,amount:x.amount,paidBy:x.paidBy,splits:friends.slice()}:x;}));}
+  function removeExpense(id){if(confirmDelExp!==id){setConfirmDelExp(id);return;}setExpenses(expenses.filter(function(x){return x.id!==id;}));setConfirmDelExp(null);}
+  function clearTrip(){if(!confirmClear){setConfirmClear(true);return;}setFriends([]);setExpenses([]);setNextId(1);setTripName('My Quest');setConfirmClear(false);_store.clear();}
+  function saveTrip(){var d={version:1,tripName:tripName,savedAt:new Date().toISOString(),friends:friends,expenses:expenses.map(function(x){return{date:x.date,desc:x.desc,amount:x.amount,paidBy:x.paidBy,splits:x.splits};})};var uri='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(d,null,2));var a=document.createElement('a');a.href=uri;a.download=(tripName.replace(/[^a-zA-Z0-9]/g,'_')||'quest')+'.json';document.body.appendChild(a);a.click();document.body.removeChild(a);}
+  function loadTrip(){var inp=document.createElement('input');inp.type='file';inp.accept='.json';inp.onchange=function(ev){var file=ev.target.files[0];if(!file)return;var r=new FileReader();r.onload=function(e){try{var d=JSON.parse(e.target.result);if(d.friends)setFriends(d.friends);if(d.expenses){setExpenses(d.expenses.map(function(x,i){return{id:i+1,date:x.date,desc:x.desc,amount:x.amount,paidBy:x.paidBy,splits:x.splits};}));setNextId((d.expenses.length||0)+1);}if(d.tripName)setTripName(d.tripName);}catch(err){}};r.readAsText(file);};inp.click();}
+  function fmt(n){return'$'+Math.abs(n).toFixed(2);}
+
+  var tabs=[{id:'expenses',label:'Expenses',icon:'fa-receipt'},{id:'summary',label:'Summary',icon:'fa-calculator'},{id:'setup',label:'Setup',icon:'fa-users'}];
+
+  return e('div',{className:'app'},
+    e('div',{className:'header'},e('h1',null,e('i',{className:'fa-solid fa-skull-crossbones',style:{marginRight:8}}),'IOU Slayer'),e('p',null,'Slay those IOUs among friends')),
+    e('div',{className:'toolbar'},
+      e('input',{className:'input input-lg',value:tripName,onChange:function(ev){setTripName(ev.target.value);},placeholder:'Quest name...',style:{fontWeight:500,maxWidth:250}}),
+      e('button',{className:'btn btn-primary',onClick:saveTrip},e('i',{className:'fa-solid fa-download'}),'Save'),
+      e('button',{className:'btn btn-outline',onClick:loadTrip},e('i',{className:'fa-solid fa-upload'}),'Load'),
+      confirmClear?e('span',{style:{display:'inline-flex',gap:4,alignItems:'center'}},e('span',{style:{fontSize:'.8rem',color:'var(--err)'}},'End quest?'),e('button',{className:'btn btn-sm btn-danger',onClick:clearTrip},'Yes'),e('button',{className:'btn btn-sm btn-outline',onClick:function(){setConfirmClear(false);}},'No')):e('button',{className:'btn btn-outline',onClick:clearTrip,style:{color:'var(--err)'}},e('i',{className:'fa-solid fa-trash'}),'Clear')
+    ),
+    e('div',{className:'tabs'},tabs.map(function(t){return e('button',{key:t.id,className:'tab'+(tab===t.id?' active':''),onClick:function(){setTab(t.id);}},e('i',{className:'fa-solid '+t.icon,style:{marginRight:6}}),t.label);})),
+    tab==='expenses'&&ExpensesTab({friends:friends,expenses:expenses,addExpense:addExpense,updateExpense:updateExpense,toggleSplit:toggleSplit,selectAllSplits:selectAllSplits,removeExpense:removeExpense,confirmDelExp:confirmDelExp,setConfirmDelExp:setConfirmDelExp}),
+    tab==='summary'&&SummaryTab({friends:friends,calc:calc,fmt:fmt,matrixOpen:matrixOpen,setMatrixOpen:setMatrixOpen,balancesOpen:balancesOpen,setBalancesOpen:setBalancesOpen}),
+    tab==='setup'&&SetupTab({friends:friends,addFriend:addFriend,removeFriend:removeFriend,newFriendName:newFriendName,setNewFriendName:setNewFriendName,confirmDelFriend:confirmDelFriend,setConfirmDelFriend:setConfirmDelFriend})
+  );
+}
+
+function ExpensesTab(p){
+  return e('div',null,
+    e('div',{className:'card'},
+      e('h2',null,e('i',{className:'fa-solid fa-receipt',style:{marginRight:8}}),'Expenses (',p.expenses.length,')'),
+      e('button',{className:'btn btn-primary',onClick:p.addExpense,style:{marginBottom:16}},e('i',{className:'fa-solid fa-plus'}),'Add Expense'),
+      p.expenses.map(function(exp){return e('div',{key:exp.id,style:{border:'1px solid var(--border)',borderRadius:'var(--r)',padding:12,marginBottom:10}},
+        e('div',{className:'form-row'},
+          e('input',{className:'input input-date',type:'date',value:exp.date,onChange:function(ev){p.updateExpense(exp.id,'date',ev.target.value);}}),
+          e('input',{className:'input input-lg',placeholder:'Description',value:exp.desc,onChange:function(ev){p.updateExpense(exp.id,'desc',ev.target.value);}}),
+          e('input',{className:'input input-amount',type:'number',placeholder:'$0',value:exp.amount||'',onChange:function(ev){p.updateExpense(exp.id,'amount',parseFloat(ev.target.value)||0);}}),
+          e('select',{className:'input input-md',value:exp.paidBy,onChange:function(ev){p.updateExpense(exp.id,'paidBy',ev.target.value);}},e('option',{value:''},'\u2014 Paid by \u2014'),p.friends.map(function(f){return e('option',{key:f,value:f},f);})),
+          p.confirmDelExp===exp.id?e('span',{style:{display:'inline-flex',gap:4,alignItems:'center'}},e('span',{style:{fontSize:'.75rem',color:'var(--err)'}},'Delete?'),e('button',{className:'btn btn-sm btn-danger',onClick:function(){p.removeExpense(exp.id);}},'Yes'),e('button',{className:'btn btn-sm btn-outline',onClick:function(){p.setConfirmDelExp(null);}},'No')):e('button',{className:'btn btn-sm btn-danger',onClick:function(){p.removeExpense(exp.id);}},e('i',{className:'fa-solid fa-trash'}))
+        ),
+        e('div',{style:{marginTop:6,display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}},
+          e('span',{style:{fontSize:'.8rem',color:'var(--muted)',fontWeight:500}},'Split among:'),
+          e('button',{className:'btn btn-sm btn-outline',onClick:function(){p.selectAllSplits(exp.id);}},'All'),
+          e('div',{className:'check-grid',style:{flex:1}},p.friends.map(function(f){return e('label',{key:f,className:'check-item'},e('input',{type:'checkbox',checked:exp.splits.indexOf(f)>-1,onChange:function(){p.toggleSplit(exp.id,f);}}),f);}))
+        )
+      );})
+    ),
+    e('div',{style:{background:'var(--info-bg)',borderRadius:'var(--r)',padding:14}},
+      e('div',{style:{display:'flex',alignItems:'flex-start',gap:10}},
+        e('i',{className:'fa-solid fa-circle-info',style:{color:'var(--primary)',marginTop:3}}),
+        e('div',null,
+          e('strong',{style:{fontSize:'.9rem',color:'var(--primary)'}},'How to Use:'),
+          e('ol',{style:{paddingLeft:20,fontSize:'.85rem',color:'var(--text2)',marginTop:6,lineHeight:1.8}},
+            e('li',null,'Add all friends in the Setup tab'),
+            e('li',null,'Add expenses here \u2014 set who paid and check who shared it'),
+            e('li',null,'Check the Summary tab to see who owes whom!'),
+            e('li',null,'New quest? Click Clear to reset everything')
+          )
+        )
+      )
+    )
+  );
+}
+
+function SummaryTab(p){
+  var nonZero=p.calc.settlements.filter(function(s){return s.amount>0;});
+  var nonZeroMatrix=p.calc.settlements.filter(function(s){return Math.abs(s.amount)>0.001;});
+  return e('div',null,
+    e('div',{className:'card'},
+      e('h2',null,e('i',{className:'fa-solid fa-money-bill-transfer',style:{marginRight:8}}),'Settlement Plan \u2014 Who Pays Whom'),
+      e('p',{style:{fontSize:'.85rem',color:'var(--muted)',marginBottom:12}},'Showing only non-zero transfers (',nonZero.length,' payments needed)'),
+      nonZero.length===0?e('p',{style:{textAlign:'center',color:'var(--muted)',padding:20}},'All settled! No payments needed.'):nonZero.map(function(s,i){return e('div',{key:i,className:'settle-row'},e('span',{style:{fontWeight:500,minWidth:80}},s.from),e('span',{style:{color:'var(--muted)'}},e('i',{className:'fa-solid fa-arrow-right'})),e('span',{style:{fontWeight:500,minWidth:80}},s.to),e('span',{className:'settle-amount',style:{color:'var(--err)'}},p.fmt(s.amount)));})
+    ),
+    e('div',{className:'card'},
+      e('div',{className:'collapsible',onClick:function(){p.setBalancesOpen(!p.balancesOpen);}},
+        e('i',{className:'fa-solid fa-chevron-'+(p.balancesOpen?'down':'right'),style:{color:'var(--primary)',width:16}}),
+        e('h2',{style:{margin:0}},e('i',{className:'fa-solid fa-scale-balanced',style:{marginRight:8}}),'Individual Balances'),
+        e('span',{className:'badge badge-gray',style:{marginLeft:8}},p.friends.length+' friends')
+      ),
+      p.balancesOpen&&e('div',{style:{marginTop:12}},
+        e('div',{className:'table-wrap'},e('table',null,
+          e('thead',null,e('tr',null,e('th',null,'Friend'),e('th',{className:'text-right'},'Total Paid'),e('th',{className:'text-right'},'Total Owed'),e('th',{className:'text-right'},'Net Balance'))),
+          e('tbody',null,
+            p.friends.map(function(f){return e('tr',{key:f},e('td',{style:{fontWeight:500}},f),e('td',{className:'text-right mono'},p.fmt(p.calc.paid[f]||0)),e('td',{className:'text-right mono'},p.fmt(p.calc.owed[f]||0)),e('td',{className:'text-right'},e('span',{className:'badge '+(p.calc.balance[f]>0.01?'badge-green':p.calc.balance[f]<-0.01?'badge-red':'badge-gray')},(p.calc.balance[f]>=0?'+':'-')+p.fmt(p.calc.balance[f]))));}),
+            e('tr',{style:{fontWeight:600,borderTop:'2px solid var(--border)'}},e('td',null,'Total'),e('td',{className:'text-right mono'},p.fmt(p.calc.totalExpenses)),e('td',{className:'text-right mono'},p.fmt(Object.values(p.calc.owed).reduce(function(s,v){return s+v;},0))),e('td',{className:'text-right'},e('span',{className:'badge badge-green',style:{fontFamily:'var(--mono)'}},'$'+Math.abs(Object.values(p.calc.balance).reduce(function(s,v){return s+v;},0)).toFixed(2))))
+          )
+        ))
+      )
+    ),
+    e('div',{className:'card'},
+      e('div',{className:'collapsible',onClick:function(){p.setMatrixOpen(!p.matrixOpen);}},
+        e('i',{className:'fa-solid fa-chevron-'+(p.matrixOpen?'down':'right'),style:{color:'var(--primary)',width:16}}),
+        e('h2',{style:{margin:0}},e('i',{className:'fa-solid fa-list',style:{marginRight:8}}),'Full Settlement Matrix'),
+        e('span',{className:'badge badge-gray',style:{marginLeft:8}},nonZeroMatrix.length+' pairs')
+      ),
+      p.matrixOpen&&e('div',{style:{marginTop:12}},
+        e('p',{style:{fontSize:'.85rem',color:'var(--muted)',marginBottom:12}},'Positive = From owes To. Negative = To owes From.'),
+        e('div',{className:'table-wrap'},e('table',null,
+          e('thead',null,e('tr',null,e('th',null,'From'),e('th',null,'To'),e('th',{className:'text-right'},'Amount'))),
+          e('tbody',null,nonZeroMatrix.map(function(s,i){return e('tr',{key:i},e('td',null,s.from),e('td',null,s.to),e('td',{className:'text-right'},e('span',{className:'badge '+(s.amount>0.01?'badge-red':s.amount<-0.01?'badge-blue':'badge-gray'),style:{fontFamily:'var(--mono)'}},(s.amount>=0?'':'- ')+p.fmt(s.amount))));}))
+        ))
+      )
+    )
+  );
+}
+
+function SetupTab(p){
+  return e('div',null,
+    e('div',{className:'card'},
+      e('h2',null,e('i',{className:'fa-solid fa-user-group',style:{marginRight:8}}),'Your Party (Friends)'),
+      e('div',{style:{display:'flex',flexWrap:'wrap',gap:8,marginBottom:12}},
+        p.friends.map(function(f,i){return e('div',{key:f,style:{display:'flex',alignItems:'center',gap:6,background:'#f0f4ff',padding:'6px 12px',borderRadius:20}},
+          e('span',{style:{fontWeight:500}},(i+1)+'. '+f),
+          p.confirmDelFriend===f?e('span',{style:{display:'inline-flex',gap:3,alignItems:'center'}},e('button',{className:'btn btn-sm btn-danger',onClick:function(){p.removeFriend(f);},style:{padding:'2px 6px'}},e('i',{className:'fa-solid fa-check'})),e('button',{className:'btn btn-sm btn-outline',onClick:function(){p.setConfirmDelFriend(null);},style:{padding:'2px 6px'}},e('i',{className:'fa-solid fa-times'}))):e('button',{className:'btn btn-sm btn-danger',onClick:function(){p.removeFriend(f);},style:{padding:'2px 6px'}},e('i',{className:'fa-solid fa-times'}))
+        );})
+      ),
+      e('div',{className:'form-row',style:{marginTop:8}},
+        e('input',{className:'input input-md',placeholder:'New friend name...',value:p.newFriendName,onChange:function(ev){p.setNewFriendName(ev.target.value);},onKeyDown:function(ev){if(ev.key==='Enter')p.addFriend();}}),
+        e('button',{className:'btn btn-primary',onClick:p.addFriend},e('i',{className:'fa-solid fa-plus'}),'Add')
+      )
+    ),
+    e('div',{className:'card'},
+      e('h2',null,e('i',{className:'fa-solid fa-circle-info',style:{marginRight:8}}),'How to Use'),
+      e('ol',{style:{paddingLeft:20,fontSize:'.9rem',lineHeight:1.8}},
+        e('li',null,'Add all friends on this tab'),
+        e('li',null,'Go to Expenses \u2192 enter each expense with who paid and who participated'),
+        e('li',null,'Check Summary \u2192 see who owes whom!'),
+        e('li',null,'New quest? Click Clear to reset everything.')
+      )
+    )
+  );
+}
+
+ReactDOM.render(e(App),document.getElementById('root'));
+if('serviceWorker' in navigator){try{navigator.serviceWorker.register('sw.js').catch(function(){});}catch(x){}}
+</script>
+</body>
+</html>
